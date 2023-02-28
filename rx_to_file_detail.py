@@ -9,7 +9,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     # set receive buffer 256 (default 32)
     parser.add_argument("-a", "--args", default="num_recv_frames=256", type=str)
-    parser.add_argument("-o", "--output-file", default="rx_samples.npy", type=str)
+    parser.add_argument("-o", "--output-file", default="rx_samples.bin", type=str)
     parser.add_argument("-f", "--freq", default=3600e6, type=float)
     parser.add_argument("-r", "--rate", default=1e6, type=float)
     parser.add_argument("-d", "--duration", default=10.0, type=float)

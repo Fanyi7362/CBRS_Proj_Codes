@@ -24,7 +24,9 @@ waveforms = {
 def parse_args():
     """Parse the command line arguments"""
     parser = argparse.ArgumentParser()
-    parser.add_argument("-a", "--args", default="type=b200", type=str)
+    # "serial=31993A8"
+    # "serial=3199405"
+    parser.add_argument("-a", "--args", default="serial=3199405", type=str)
     parser.add_argument(
         "-w", "--waveform", default="sine", choices=waveforms.keys(), type=str)
     parser.add_argument("-f", "--freq", default=3600e6, type=float)

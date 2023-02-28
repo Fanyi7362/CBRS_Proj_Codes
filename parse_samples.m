@@ -1,4 +1,4 @@
-samples = h_read_complex_binary("rx_samples.npy");
+samples = h_read_complex_binary("rx_samples.bin");
 len_samps = length(samples);
 samples_amp = abs(samples(1e4:10:end));
 samples_fftamp = abs(fftshift(fft(samples(1e4:10:end))));
