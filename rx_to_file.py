@@ -21,12 +21,12 @@ def parse_args():
     # "serial=31993A8"
     # "serial=3199405"
     parser.add_argument("-a", "--args", default="serial=31993A8", type=str)
-    parser.add_argument("-o", "--output-file", default="rx_samples.bin", type=str)
+    parser.add_argument("-o", "--output-file", default="rx_samples1.bin", type=str)
     parser.add_argument("-f", "--freq", default=3600e6, type=float)
     parser.add_argument("-r", "--rate", default=1e6, type=float)
     parser.add_argument("-d", "--duration", default=10.0, type=float)
     parser.add_argument("-c", "--channels", default=0, nargs="+", type=int)
-    parser.add_argument("-g", "--gain", type=int, default=50)
+    parser.add_argument("-g", "--gain", type=int, default=30)
     parser.add_argument("-n", "--numpy", default=False, action="store_true",
                         help="Save output file in NumPy format (default: No)")
     return parser.parse_args()
