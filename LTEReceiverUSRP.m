@@ -22,11 +22,12 @@ saveToFile = "hest_long.mat";
 dcodeMIB = true;
 
 if rxsim.ReceiveOnSDR
-    rxsim.SDRDeviceName = "B210";        % SDR that is used for waveform reception
-    rxsim.RadioIdentifier = '31993A8';      % Value used to identify radio, for example, IP address, USB port, or serial number
-    rxsim.RadioSampleRate = 30.72e6;      % Configured for 15.36e6 Hz capture bandwidth
+    rxsim.SDRDeviceName = "X310";        % SDR that is used for waveform reception
+    % '31993A8'
+    rxsim.RadioIdentifier = '192.168.10.5';      % Value used to identify radio, for example, IP address, USB port, or serial number
+    rxsim.RadioSampleRate = 15.36e6;      % Configured for 15.36e6 Hz capture bandwidth
     rxsim.RadioCenterFrequency = 1940000000; % Center frequency in Hz
-    rxsim.FramesPerCapture = 10;     % Number of contiguous LTE frames to capture
+    rxsim.FramesPerCapture = 200;     % Number of contiguous LTE frames to capture
     rxsim.NumCaptures = 1;          % Number of captures for the SDR to perform
     rxsim.NumAntennas = 1;          % Number of receive antennas
 
@@ -271,8 +272,8 @@ end
 
 save(saveToFile, "hest_long");
 figure(1);
-% s = surf(abs(hest_long(1:1:end,1:1:end,1,1)));
-s = surf(abs(hest(1:1:end,1:1:end,1,1)));
+s = surf(abs(hest_long(1:12:end,1:14:end,1,1)));
+% s = surf(abs(hest(1:1:end,1:1:140,1,1)));
 s.EdgeColor = 'none';
 xlabel("OFDM Symbol Index");
 ylabel("Subcarrier Index");
