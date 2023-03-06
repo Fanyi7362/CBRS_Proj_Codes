@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument("-d", "--duration", default=10.0, type=float)
     # channels can be [0], [1], [0,1]
     parser.add_argument("-c", "--channels", default=0, nargs="+", type=int)
-    parser.add_argument("-g", "--gain", type=int, default=20)
+    parser.add_argument("-g", "--gain", type=int, default=0)
     parser.add_argument("--wave-freq", default=3e5, type=float)
     parser.add_argument("--wave-ampl", default=10, type=float)
     return parser.parse_args()
@@ -51,7 +51,7 @@ def main():
         args.channels = [args.channels]
     
     if args.waveform == "file":
-        data = np.fromfile("./tx_3610_1536.bin", dtype=np.csingle)
+        data = np.fromfile("./tx_3600_1536.bin", dtype=np.csingle)
     else:
         data = np.array(
             list(map(lambda n: args.wave_ampl * waveforms[args.waveform](n, args.wave_freq, args.rate),
