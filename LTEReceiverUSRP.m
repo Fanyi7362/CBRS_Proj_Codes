@@ -129,7 +129,8 @@ end
 
 % Show power spectral density of captured burst
 % 1382400 = 9*153600; 
-rxWaveform_short = rxWaveform(1:1382400);
+n_short = 0.09*rxsim.RadioSampleRate;
+rxWaveform_short = rxWaveform(1:n_short);
 spectrumScope(rxWaveform_short);
 release(spectrumScope);
 
