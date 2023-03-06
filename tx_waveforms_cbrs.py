@@ -27,7 +27,7 @@ def parse_args():
     # "serial=31993A8"
     # "serial=3199405"
     # "addr=192.168.10.5"
-    parser.add_argument("-a", "--args", default="serial=3199405", type=str)
+    parser.add_argument("-a", "--args", default="addr=192.168.10.5", type=str)
     parser.add_argument(
         "-w", "--waveform", default="file", type=str) # choices=waveforms.keys()
     parser.add_argument("-f", "--freq", default=3600e6, type=float)
@@ -37,7 +37,7 @@ def parse_args():
     parser.add_argument("-d", "--duration", default=10.0, type=float)
     # channels can be [0], [1], [0,1]
     parser.add_argument("-c", "--channels", default=0, nargs="+", type=int)
-    parser.add_argument("-g", "--gain", type=int, default=50)
+    parser.add_argument("-g", "--gain", type=int, default=20)
     parser.add_argument("--wave-freq", default=3e5, type=float)
     parser.add_argument("--wave-ampl", default=10, type=float)
     return parser.parse_args()
