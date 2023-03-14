@@ -2,37 +2,27 @@
 % clear;close all
 
 % csi_folder = './data0921_10total/site1_1805/trace025/csi_log_2020_09_06_19_08_19/';
-csi_folder = './csi_log_2021_05_27_18_10_42/';
-% 
-% filename_a1 = 'csi_amp_usrpIdx_0_freq_1940000000_N_-1_PRB_100_TX_2_RX_2.csiLog';
-% filename_a2 = 'csi_amp_usrpIdx_1_freq_1940000000_N_-1_PRB_100_TX_2_RX_2.csiLog';
-% filename_p1 = 'csi_phase_usrpIdx_0_freq_1940000000_N_-1_PRB_100_TX_2_RX_2.csiLog';
-% filename_p2 = 'csi_phase_usrpIdx_1_freq_1940000000_N_-1_PRB_100_TX_2_RX_2.csiLog';
+csi_folder = './data/csi_log_2023_03_12_21_23_43/';
 
 % filename_a1 = 'csi_amp_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_a2 = 'csi_amp_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_p1 = 'csi_phase_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_p2 = 'csi_phase_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 
-filename_a1 = 'csi_amp_usrpIdx_0_freq_2145000000_N_-1_PRB_100_TX_4_RX_2.csiLog';
-filename_a2 = 'csi_amp_usrpIdx_1_freq_2145000000_N_-1_PRB_100_TX_4_RX_2.csiLog';
-filename_p1 = 'csi_phase_usrpIdx_0_freq_2145000000_N_-1_PRB_100_TX_4_RX_2.csiLog';
-filename_p2 = 'csi_phase_usrpIdx_1_freq_2145000000_N_-1_PRB_100_TX_4_RX_2.csiLog';
+filename_a1 = 'csi_amp_usrpIdx_0_freq_3560000000_N_-1_PRB_50_TX_1_RX_2.csiLog';
+filename_p1 = 'csi_phase_usrpIdx_0_freq_3560000000_N_-1_PRB_50_TX_1_RX_2.csiLog';
+
 
 csi_a1  = load([csi_folder,filename_a1]);
-csi_a2  = load([csi_folder,filename_a2]);
 csi_p1  = load([csi_folder,filename_p1]);
-csi_p2  = load([csi_folder,filename_p2]);
+
+n_prb = 50;
 
 %% data prep
-amp_1 = reshape(csi_a1,8,[],100);
-amp_2 = reshape(csi_a2,8,[],100);
-
-pha_1 = reshape(csi_p1,8,[],100);
-pha_2 = reshape(csi_p2,8,[],100);
+amp_1 = reshape(csi_a1,2,[],n_prb);
+pha_1 = reshape(csi_p1,2,[],n_prb);
 
 csi_1 = amp_1.*exp(1i.*pha_1);
-csi_2 = amp_2.*exp(1i.*pha_2);
 
 %% plot
 k = 0;
