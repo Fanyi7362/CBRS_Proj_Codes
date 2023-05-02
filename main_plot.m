@@ -73,15 +73,15 @@ interval = 20;
 % subplot(2,4,4)
 % plot_cfo(pha_14,a,b,interval);
 % 
-figure(5)
-subplot(1,4,1)
-plot_amp(amp_2(1,:,:),st,ed,interval);
-subplot(1,4,2)
-plot_amp(amp_2(2,:,:),st,ed,interval);
-subplot(1,4,3)
-plot_amp(amp_2(3,:,:),st,ed,interval);
-subplot(1,4,4)
-plot_amp(amp_2(4,:,:),st,ed,interval);
+% figure(5)
+% subplot(1,4,1)
+% plot_amp(amp_2(1,:,:),st,ed,interval);
+% subplot(1,4,2)
+% plot_amp(amp_2(2,:,:),st,ed,interval);
+% subplot(1,4,3)
+% plot_amp(amp_2(3,:,:),st,ed,interval);
+% subplot(1,4,4)
+% plot_amp(amp_2(4,:,:),st,ed,interval);
 % 
 % figure(6)
 % subplot(1,2,1)

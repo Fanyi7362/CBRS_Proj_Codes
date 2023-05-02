@@ -174,10 +174,10 @@ numFullFrames = size(rxGrid_short,2)/140;
 
 tic
 N_frames = numFullFrames;
-frame_downsamp = 10;
-hest_long = zeros(size(rxGrid,1),size(rxGrid,2)/frame_downsamp,rxsim.NumAntennas,4);
-for i=1:N_frames*10/frame_downsamp
-    frame_step = size(rxGrid,2)/(N_frames*10/frame_downsamp);
+subframe_downsamp = 10;
+hest_long = zeros(size(rxGrid,1),size(rxGrid,2)/subframe_downsamp,rxsim.NumAntennas,4);
+for i=1:N_frames*10/subframe_downsamp
+    frame_step = size(rxGrid,2)/(N_frames*10/subframe_downsamp);
     subframe_step = size(rxGrid,2)/(N_frames*10);
     idx_hest = ((i-1)*subframe_step+1):(i*subframe_step);
     idx_rxgrid = ((i-1)*frame_step+1):((i-1)*frame_step+subframe_step);
@@ -274,7 +274,9 @@ end
 save(saveToFile, "hest_long");
 figure(1);
 % s = surf(abs(hest_long(1:12:end,1:14:end,1,1)));
-s = surf(angle(hest_long(1:1:end,1:1:280,1,1)) -angle(hest_long(1:1:end,1:1:280,2,1)) );
+phase_diff = angle(hest_long(1:1:end,1:1:1400,1,1)) -angle(hest_long(1:1:end,1:1:1400,2,1));
+s = surf(unwrap(phase_diff) );
+% s = surf(abs(hest_long(1:1:end,1:1:1400,1,1)) );
 s.EdgeColor = 'none';
 xlabel("OFDM Symbol Index");
 ylabel("Subcarrier Index");
