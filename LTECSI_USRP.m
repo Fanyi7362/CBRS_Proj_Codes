@@ -26,12 +26,12 @@ if rxsim.ReceiveOnSDR
     % '31993A8'
     % '192.168.10.5'
     % '32712EC'
-    rxsim.RadioIdentifier = '192.168.10.6';      % Value used to identify radio, for example, IP address, USB port, or serial number
-    rxsim.RadioSampleRate = 7.68e6;      % Configured for 15.36e6 Hz capture bandwidth
-    rxsim.RadioCenterFrequency = 3560000000; % Center frequency in Hz
-    rxsim.FramesPerCapture = 100;     % Number of contiguous LTE frames to capture
+    rxsim.RadioIdentifier = '192.168.10.5';      % Value used to identify radio, for example, IP address, USB port, or serial number
+    rxsim.RadioSampleRate = 15.36e6;      % Configured for 15.36e6 Hz capture bandwidth
+    rxsim.RadioCenterFrequency = 1940000000; % Center frequency in Hz
+    rxsim.FramesPerCapture = 20;     % Number of contiguous LTE frames to capture
     rxsim.NumCaptures = 1;          % Number of captures for the SDR to perform
-    rxsim.NumAntennas = 2;          % Number of receive antennas
+    rxsim.NumAntennas = 1;          % Number of receive antennas
 
     % Derived parameter
     captureTime = (rxsim.FramesPerCapture + 1)* 10e-3; % Increase capture frame by 1 to account for a full frame not being captured
@@ -132,7 +132,7 @@ end
 
 % Show power spectral density of captured burst
 % 1382400 = 9*153600; 
-n_short = 0.09*rxsim.RadioSampleRate;
+n_short = 0.01*rxsim.RadioSampleRate;
 rxWaveform_short = rxWaveform(1:n_short,:);
 spectrumScope(rxWaveform_short);
 release(spectrumScope);
@@ -164,7 +164,7 @@ rxGrid = lteOFDMDemodulate(enb,rxWaveform);
 % Perform channel estimation
 % time dimension downsampled by 20
 % rxGrid_short takes first 10 frame
-rxGrid_short = rxGrid(:,1:2800,:);
+rxGrid_short = rxGrid(:,1:1400,:);
 [hest,nest] = lteDLChannelEstimate(enb,cec,rxGrid_short);
 
 sfDims = lteResourceGridSize(enb);
@@ -173,16 +173,18 @@ LFrame = 10*Lsf; % OFDM symbols per frame
 numFullFrames = size(rxGrid_short,2)/140;
 
 tic
-N_frames = numFullFrames;
-subframe_downsamp = 10;
-hest_long = zeros(size(rxGrid,1),size(rxGrid,2)/subframe_downsamp,rxsim.NumAntennas,4);
-for i=1:N_frames*10/subframe_downsamp
-    frame_step = size(rxGrid,2)/(N_frames*10/subframe_downsamp);
-    subframe_step = size(rxGrid,2)/(N_frames*10);
-    idx_hest = ((i-1)*subframe_step+1):(i*subframe_step);
-    idx_rxgrid = ((i-1)*frame_step+1):((i-1)*frame_step+subframe_step);
-    [hest_long(:,idx_hest,:,:),nest_long] = lteDLChannelEstimate(enb,cec,rxGrid(:, idx_rxgrid,:));
-end
+% % downsample code
+% N_frames = size(rxGrid,2)/140;
+% subframe_downsamp = 10;
+% hest_long = zeros(size(rxGrid,1),size(rxGrid,2)/subframe_downsamp,rxsim.NumAntennas,4);
+% for i=1:N_frames*10/subframe_downsamp
+%     frame_step = size(rxGrid,2)/(N_frames*10/subframe_downsamp);
+%     subframe_step = size(rxGrid,2)/(N_frames*10);
+%     idx_hest = ((i-1)*subframe_step+1):(i*subframe_step);
+%     idx_rxgrid = ((i-1)*frame_step+1):((i-1)*frame_step+subframe_step);
+%     [hest_long(:,idx_hest,:,:),nest_long] = lteDLChannelEstimate(enb,cec,rxGrid(:, idx_rxgrid,:));
+% end
+[hest_long,nest_long] = lteDLChannelEstimate(enb,cec,rxGrid);
 toc
 
 
@@ -274,9 +276,9 @@ end
 save(saveToFile, "hest_long");
 figure(1);
 % s = surf(abs(hest_long(1:12:end,1:14:end,1,1)));
-phase_diff = angle(hest_long(1:1:end,1:1:1400,1,1)) -angle(hest_long(1:1:end,1:1:1400,2,1));
-s = surf(unwrap(phase_diff) );
-% s = surf(abs(hest_long(1:1:end,1:1:1400,1,1)) );
+% phase_diff = angle(hest_long(1:1:end,1:1:1400,1,1)) -angle(hest_long(1:1:end,1:1:1400,2,1));
+% s = surf(unwrap(phase_diff) );
+s = surf(abs(hest_long(1:1:end,1:1:1400,1,1)) );
 s.EdgeColor = 'none';
 xlabel("OFDM Symbol Index");
 ylabel("Subcarrier Index");
