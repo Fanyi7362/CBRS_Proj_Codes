@@ -28,8 +28,9 @@ if ~radioFound
     error(message('sdru:examples:NeedMIMORadio'));
 end
 
-radio.ChannelMapping = 1;     % 1, 2, or [1 2]xxssssssssss
-radio.CenterFrequency = 3610000000;
+radio.ChannelMapping = 1;     % 1, 2, or [1 2]
+radio.CenterFrequency = 3570000000;
+DuplexMode = 'FDD';
 radio.Gain = 20;
 % Sampling rate is 30.72 MHz. LTE frames are 10 ms long
 radio.SamplesPerFrame = radio.MasterClockRate/radio.DecimationFactor/100; 
@@ -48,7 +49,8 @@ fprintf('%s\n',separator);
 pause(1)
 
 samplesPerFrame = radio.SamplesPerFrame;
-burstCaptures = zeros(radio.SamplesPerFrame, radio.NumFramesInBurst,1);
+nRxAnts = size(radio.ChannelMapping,2);
+burstCaptures = zeros(radio.SamplesPerFrame, radio.NumFramesInBurst,nRxAnts);
 len = 0;
 for frame = 1:radio.NumFramesInBurst
     while len == 0
@@ -62,13 +64,13 @@ fprintf('%s\n',separator);
 fprintf('End capturing\n');
 fprintf('%s\n',separator);
 
-trace_1 = reshape(burstCaptures,[],1);
+trace_1 = reshape(burstCaptures,[],nRxAnts);
 clear burstCaptures
 
 % LTE sampling rate
 RadioSampleRate = radio.MasterClockRate/radio.DecimationFactor ; 
 n_short = 0.21*RadioSampleRate;
-eNodeBOutput =  trace_1(1:n_short);
+eNodeBOutput =  trace_1(1:n_short,:);
 
 % Check for presence of LTE Toolbox
 if isempty(ver('lte')) 
@@ -93,7 +95,7 @@ end
 
 % Set eNodeB basic parameters
 enb = struct;                   % eNodeB config structure
-enb.DuplexMode = 'TDD';         % assume FDD duxplexing mode
+enb.DuplexMode = DuplexMode;         % assume FDD duxplexing mode
 enb.CyclicPrefix = 'Normal';    % assume normal cyclic prefix
 enb.NDLRB = 6;                  % Number of resource blocks
 ofdmInfo = lteOFDMInfo(enb);    % Needed to get the sampling rate
@@ -360,18 +362,18 @@ fprintf('\nPerforming frequency offset estimation...\n');
 % not yet been performed - for TDD we cannot use the duplexing arrangement 
 % to indicate which time periods to use for frequency offset estimation
 % prior to doing timing synch.
-delta_f = lteFrequencyOffset(setfield(enb,'DuplexMode','FDD'), resampled(1:6e5)); %#ok<SFLD>
+delta_f = lteFrequencyOffset(setfield(enb,'DuplexMode','FDD'), resampled(1:30.72e5,nRxAnts)); %#ok<SFLD>
 fprintf('Frequency offset: %0.3fHz\n',delta_f);
 resampled = lteFrequencyCorrect(enb, resampled, delta_f);
 
 % Find beginning of frame
 fprintf('\nPerforming timing offset estimation...\n');
-offset2 = lteDLFrameOffset(enb, resampled(1:6e5)); 
+offset2 = lteDLFrameOffset(enb, resampled(1:30.72e5,nRxAnts)); 
 fprintf('Timing offset to frame start: %d samples\n',offset2);
 % aligning signal with the start of the frame
 resampled = resampled(1+offset2:end,:);   
 samplesPerFrame = ofdmInfo.SamplingRate/100;
-tailSamples = mod(length(resampled),samplesPerFrame);
+tailSamples = mod(size(resampled,1),samplesPerFrame);
 resampled = resampled(1:end-tailSamples,:);
 
 % OFDM demodulation
@@ -385,7 +387,7 @@ if (isempty(rxgrid))
 end
 
 % While we have more data left, attempt to decode CSI
-hest_array = zeros(size(rxgrid));
+hest_array = zeros([size(rxgrid),enb.CellRefP]);
 
 fprintf('%s\n',separator);
 fprintf('extracting CSI\n');
@@ -399,9 +401,9 @@ while (size(rxgrid,2) > 0)
     rxframe = rxgrid(:,1:L*Nsubframes_perEst,:);
     
     % Perform channel estimation
-    hest = [];
+    hest = []; % subcarriers, symbols, rxAnts, txAnts
     [hest,nest] = lteDLChannelEstimate(enb, cec, rxframe);    
-    hest_array(:,Nsymbols:(Nsymbols+L*Nsubframes_perEst-1)) = hest(:,:,1,1);
+    hest_array(:,Nsymbols:(Nsymbols+L*Nsubframes_perEst-1),:,:) = hest(:,:,:,:);
 
     if (size(rxgrid,2)>=L*Nsubframes_perEst)
         rxgrid(:,1:(L*Nsubframes_perEst),:) = [];   % Remove 1 frame
@@ -421,10 +423,22 @@ while (size(rxgrid,2) > 0)
 end
 
 figure(channelFigure);
-surf(abs(hest_array));
+surf(abs(hest_array(:,:,1,1)));
 hSIB1RecoveryExamplePlots(channelFigure);
 channelFigure.CurrentAxes.XLim = [0 size(hest_array,2)+1];
 channelFigure.CurrentAxes.YLim = [0 size(hest_array,1)+1];
+
+fprintf('%s\n',separator);
+fprintf('plotting\n');
+fprintf('%s\n\n',separator);
+figure(2);
+phase_diff = angle(hest_array(:,:,1,1)) -angle(hest_array(:,:,2,1));
+s = surf(unwrap(phase_diff) );
+s.EdgeColor = 'none';
+xlabel("OFDM Symbol Index");
+ylabel("Subcarrier Index");
+zlabel("Magnitude");
+title("Estimate of Channel Magnitude Frequency Response");
 
 save('LTE_trace','trace_1','eNodeBOutput','hest_array','RadioSampleRate')
 
