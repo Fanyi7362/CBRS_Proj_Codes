@@ -1,5 +1,5 @@
-# ignore ALL .log files
-*.mat
+# ignore ALL .mat files
+# *.mat
 
 # ignore ALL files in ANY directory named temp
 data/
