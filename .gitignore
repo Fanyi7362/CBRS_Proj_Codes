@@ -1,5 +1,6 @@
 # ignore ALL .mat files
-# *.mat
+*.mat
+matlab_codes/*.mat
 
 # ignore ALL files in ANY directory named temp
 data/

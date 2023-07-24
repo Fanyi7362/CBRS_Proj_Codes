@@ -1,0 +1,7 @@
+Arduino1: master
+Arduino2-4: slave
+Arduino5: filter
+
+Arduino6: master
+Arduino7-9: slave
+Arduino10: filter
