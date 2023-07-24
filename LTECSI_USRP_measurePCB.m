@@ -1,4 +1,5 @@
 clear;
+close all;
 %% Connect to Radio
 tic
 radioFound = false;
@@ -439,6 +440,13 @@ xlabel("OFDM Symbol Index");
 ylabel("Subcarrier Index");
 zlabel("Magnitude");
 title("Estimate of Channel Magnitude Frequency Response");
+
+fprintf('%s\n',separator);
+fprintf('Calculating mean dB\n');
+hest_db = mag2db(abs(hest_array(:,:,:,1)));
+meandB = mean(hest_db, 'all');
+fprintf('Calculated mean dB: %f db\n', meandB);
+fprintf('%s\n\n',separator);
 
 save('LTE_trace','trace_1','eNodeBOutput','hest_array','RadioSampleRate')
 
