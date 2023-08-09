@@ -1,135 +1,166 @@
 #include <SPI.h>
 
-// amplifier
-// pin 13 is used to enable Board1 amplifier
+// AMPLIFIER ENABLE
 // high: amplifier on, low: amplifier bypass
 #define EN_AMP  13
 
-// rf switch
-// pin 4 is used to control Board1's switch
-// high: antenna to J1F, low: J3F to J1F
-#define SWITCH  14
+// PHASE SHIFTER SELECTION
+// 12 phase shifters from bottom to top, bottom is the microcontroller side
+// their net name are as follows: 
+// SPI_LE21, SPI_LE11, SPI_LE22, SPI_LE12, SPI_LE23, SPI_LE13
+// SPI_LE24, SPI_LE14, SPI_LE25, SPI_LE15, SPI_LE26, SPI_LE16
+#define N_PHASE_SHIFTERS 12
+int SPI_LE[N_PHASE_SHIFTERS] = {7, 6, A3, A4, A5, A6, 0, 1, 2, 3, 4, 5};
+#define N_PHASE_SET 6
+int SPI_LE_set1[N_PHASE_SET] = {7, A3, A5, 0, 2, 4}; // SPI_LE21, SPI_LE22, SPI_LE23, SPI_LE24, SPI_LE25, SPI_LE26
+int SPI_LE_set2[N_PHASE_SET] = {6, A4, A6, 1, 3, 5}; // SPI_LE11, SPI_LE12, SPI_LE13, SPI_LE14, SPI_LE15, SPI_LE16
+int phase_ind_set1[N_PHASE_SET]; // for even number indexed phase shifters, closer to the microcontroller, SPI_LE21, SPI_LE22, ...
+int phase_ind_set2[N_PHASE_SET]; // for odd number indexed phase shifters, further to the microcontroller, SPI_LE11, SPI_LE12, ...
 
-// phase shifter
-#define SPI_LE21  7
-#define SPI_LE11  6
-
-#define SPI_LE22  A3
-#define SPI_LE12  A4
-
-#define SPI_LE23  A5
-#define SPI_LE13  A6
-
-#define SPI_LE24  0
-#define SPI_LE14  1
-
-#define SPI_LE25  2
-#define SPI_LE15  3
-
-#define SPI_LE26  4
-#define SPI_LE16  5
-
+// SYNC PIN
 // Pin to trigger the slave
 #define TRIGGER_PIN  A1
 
 // try SPI_MODE 0-3
 // SPI_CLOCK: should be a fraction of the processor's clock speed 48MHz
-// min Clock Period for phase shifter is 100ns
+// MIN Clock Period for phase shifter is 100ns
 const uint32_t SPI_CLOCK = 8000000; // 8 MHz
 SPISettings settingsA(SPI_CLOCK, MSBFIRST, SPI_MODE1);
 
-#define CTRL_WORD_COUNT 4 // Number of control words
-uint8_t ctrl_word[CTRL_WORD_COUNT]; // Control word array
-int currentWord = 0; // Keeps track of which control word to use next
-unsigned long lastMillis = 0; // Store the time of the last data send
+// Control word array
+// 4-bit phase shifter, so number of control words is 16
+#define N_AVAL_PHASE 16 
+uint8_t ctrl_word[N_AVAL_PHASE]; 
+
+// Store the time of the last data send
+unsigned long lastMillis = 0; 
+
+#define INDEX_LENGTH 1
+#define INDEX_MASK 0b111100 // used to extract the 4-bit phase index
+#define ACK_SUCCESS1 0xFF
+#define ACK_ERROR1 0xAA
+#define ACK_ERROR2 0xBB
+#define ACK_ERROR3 0xCC
+#define PREAMBLE_LENGTH 2
+const uint16_t PREAMBLE_1 = 0xAAAA;
+const uint16_t PREAMBLE_2 = 0xBBBB;
 
 void setup() {
   // initialize SPI:
   SPI.begin();
   
-  pinMode(SPI_LE11, OUTPUT); 
-  pinMode(SPI_LE21, OUTPUT); 
-  pinMode(SPI_LE12, OUTPUT); 
-  pinMode(SPI_LE22, OUTPUT);   
-  pinMode(SPI_LE13, OUTPUT); 
-  pinMode(SPI_LE23, OUTPUT); 
-  pinMode(SPI_LE14, OUTPUT); 
-  pinMode(SPI_LE24, OUTPUT);   
-  pinMode(SPI_LE15, OUTPUT); 
-  pinMode(SPI_LE25, OUTPUT); 
-  pinMode(SPI_LE16, OUTPUT); 
-  pinMode(SPI_LE26, OUTPUT);       
-  
+  // configure pins
+  for (int i = 0; i < N_PHASE_SET; ++i) {
+      pinMode(SPI_LE_set1[i], OUTPUT);
+      phaseShifterWrite(SPI_LE_set1[i], 0x00);
+      pinMode(SPI_LE_set2[i], OUTPUT);
+      phaseShifterWrite(SPI_LE_set2[i], 0x00);
+  }  
+       
   pinMode(EN_AMP, OUTPUT); 
-  pinMode(SWITCH, OUTPUT); 
   pinMode(TRIGGER_PIN, OUTPUT);
+  digitalWrite(EN_AMP, HIGH);
+  digitalWrite(TRIGGER_PIN, LOW);
 
-  digitalWrite(SWITCH, LOW); 
-  digitalWrite(EN_AMP, LOW);
-
-  // 0x00:  0 deg
-  // 0x08: 45 deg
-  // 0x10: 90 deg
-  // 0x20: 180 deg
-  // 0x30: 270 deg
-  // 0x3f: 337.5 deg
   // Initialize control words
-  ctrl_word[0] = 0x00; // 0 deg
-  ctrl_word[1] = 0x10; // 90 deg
-  ctrl_word[2] = 0x20; // 180 deg
-  ctrl_word[3] = 0x30; // 270 deg 
+  // 0x00:    0 deg, 0x04: 22.5 deg
+  // 0x08:   45 deg, 0x0c: 67.5 deg
+  // 0x10:   90 deg
+  // 0x20:  180 deg
+  // 0x30:  270 deg
+  // 0x38:  315 deg, 0x3c: 337.5 deg
+  for(int i = 0; i < 16; ++i) {
+      ctrl_word[i] = i * 0x04;
+  }
 
-  phaseShifterWrite(SPI_LE11, 0x00);
-  phaseShifterWrite(SPI_LE21, 0x08);
-  phaseShifterWrite(SPI_LE12, 0x00);
-  phaseShifterWrite(SPI_LE22, 0x08);
-  phaseShifterWrite(SPI_LE13, 0x00);
-  phaseShifterWrite(SPI_LE23, 0x08);
-  phaseShifterWrite(SPI_LE14, 0x00);
-  phaseShifterWrite(SPI_LE24, 0x08);
-  phaseShifterWrite(SPI_LE15, 0x00);
-  phaseShifterWrite(SPI_LE25, 0x08);  
-  phaseShifterWrite(SPI_LE16, 0x00);
-  phaseShifterWrite(SPI_LE26, 0x08);
+  // Begin the Serial at baud rate 115200, 460800, 921600
+  Serial.begin(460800); 
 }
-
 
 
 void loop() {
-  // delay() is also in milliseconds
-  // change millis() to micros(), and compare synchronization accuracy
-  unsigned long currentMillis = millis();
-  if (currentMillis - lastMillis >= 20) {
-    lastMillis = currentMillis;
+  // delay() is in unit of milliseconds
 
-    // Cycle through control words
-    // phaseShifterWrite(SPI_LE16, ctrl_word[currentWord % CTRL_WORD_COUNT]);
-    uint8_t data1 = 0x08;
-    uint8_t data2 = ctrl_word[currentWord % CTRL_WORD_COUNT] + 0x08;
-    // phaseShifterWrite(SPI_LE26, data1);
+  if (Serial.available() >= PREAMBLE_LENGTH) {
+    // Read the preamble
+    uint16_t preamble;
+    Serial.readBytes((char*)&preamble, PREAMBLE_LENGTH);
+    // Serial.println("Data received!\n");
 
-    // Trigger the slave to send data
-    digitalWrite(TRIGGER_PIN, HIGH);
-    delayMicroseconds(50);  // Ensure the slave has time to recognize the trigger
-    digitalWrite(TRIGGER_PIN, LOW);
+    switch (preamble) {
+      case PREAMBLE_1:
+        // use phaseIndex for even number indexed phase shifters
+        SPI.beginTransaction(settingsA);
 
-    // Cycle to the next control word for the next iteration
-    currentWord = (currentWord + 1) % CTRL_WORD_COUNT;
-  }
+        for(int i = 0; i < N_PHASE_SET; ++i) {
+          int phaseIndex = readPhaseIndex();
+          if(phaseIndex != -1) {
+            phase_ind_set1[i] = phaseIndex;
+            phaseShifterWrite(SPI_LE_set1[i], ctrl_word[phaseIndex]);
+            if(i==N_PHASE_SET-1) {
+              Serial.write((byte)ACK_SUCCESS1); // Send a success acknowledgement          
+            }
+          }
+          else{
+            // error handling
+            Serial.write((byte)ACK_ERROR1); 
+            // flush to clear the receive buffer
+            while(Serial.available() > 0) {
+                Serial.read();
+            }            
+            break;
+          }
+        }
+
+        SPI.endTransaction(); 
+        break;
+
+      case PREAMBLE_2:
+        // use phaseIndex for odd number indexed phase shifters
+        break;
+
+      default:
+        // Handle an unknown preamble here
+        Serial.write((byte)ACK_ERROR2); // Send an error acknowledgement
+        // flush to clear the receive buffer
+        while(Serial.available() > 0) {
+            Serial.read();
+        }                
+        break;
+    }
+  }  
 
 }
 
-
-void phaseShifterWrite(uint8_t device_id, uint8_t ctrl_word) {
-  //  send ctrl_word via SPI:
-  
-  SPI.beginTransaction(settingsA);
+//  send ctrl_word to phase shifter via SPI
+void phaseShifterWrite(uint8_t device_id, uint8_t ctrl_word) {  
   // take the device_id pin low to de-select the chip:
   digitalWrite(device_id, LOW);  
   SPI.transfer(ctrl_word);
   // take the device_id pin high to select the chip:
   digitalWrite(device_id, HIGH);
-  digitalWrite(device_id, LOW);   
-  SPI.endTransaction();  
+  digitalWrite(device_id, LOW);      
+}
+
+int readPhaseIndex() {
+  const unsigned long TIMEOUT = 1000; // 1000 microseconds  
+  unsigned long startTime = micros();
+
+  while(Serial.available() < INDEX_LENGTH) {
+    if (micros() - startTime >= TIMEOUT) {
+      return -1; // Timeout
+    }
+  }  
+
+  char buffer;
+  Serial.readBytes(&buffer, INDEX_LENGTH);
+  int phaseIndex = ((buffer & INDEX_MASK) >> 2); // shift right 2 bits
+
+  if (phaseIndex >= 0 && phaseIndex <= 15) {
+    return phaseIndex;
+  }
+  else {
+    return -1;
+  }
 }
 

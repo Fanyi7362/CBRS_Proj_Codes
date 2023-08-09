@@ -29,8 +29,8 @@ if ~radioFound
     error(message('sdru:examples:NeedMIMORadio'));
 end
 
-radio.ChannelMapping = [1 2];     % 1, 2, or [1 2]
-radio.CenterFrequency = 3570000000;
+radio.ChannelMapping = 1;     % 1, 2, or [1 2]
+radio.CenterFrequency = 3700000000;
 DuplexMode = 'FDD';
 radio.Gain = 20;
 % Sampling rate is 30.72 MHz. LTE frames are 10 ms long
@@ -108,7 +108,8 @@ end
 
 % Display received signal spectrum
 fprintf('\nPlotting received signal spectrum...\n');
-step(spectrumAnalyzer, awgn(eNodeBOutput, 100.0));
+% step(spectrumAnalyzer, awgn(eNodeBOutput, 100.0));
+step(spectrumAnalyzer, eNodeBOutput);
 
 if (RadioSampleRate~=ofdmInfo.SamplingRate)
     fprintf('\nResampling from %0.3fMs/s to %0.3fMs/s for cell search / MIB decoding...\n',RadioSampleRate/1e6,ofdmInfo.SamplingRate/1e6);
@@ -131,7 +132,6 @@ for i=1:nRxAnts
     fft_wavaform = [fft_eNBOutput(fc_guard:fc_guard+nSamples/2-1);fft_eNBOutput(fc_guard-nSamples/2:fc_guard-1)];
     downsampled(:,i) = ifft(fft_wavaform);
 end
-
     
 %% Cell Search and Synchronization
 % Call <matlab:doc('lteCellSearch') lteCellSearch> to obtain the cell 
@@ -363,13 +363,14 @@ fprintf('\nPerforming frequency offset estimation...\n');
 % not yet been performed - for TDD we cannot use the duplexing arrangement 
 % to indicate which time periods to use for frequency offset estimation
 % prior to doing timing synch.
-delta_f = lteFrequencyOffset(setfield(enb,'DuplexMode','FDD'), resampled(1:30.72e5,nRxAnts)); %#ok<SFLD>
+nSamples_10frame = ceil(ofdmInfo.SamplingRate/10);
+delta_f = lteFrequencyOffset(setfield(enb,'DuplexMode','FDD'), resampled(1:nSamples_10frame,nRxAnts)); %#ok<SFLD>
 fprintf('Frequency offset: %0.3fHz\n',delta_f);
 resampled = lteFrequencyCorrect(enb, resampled, delta_f);
 
 % Find beginning of frame
 fprintf('\nPerforming timing offset estimation...\n');
-offset2 = lteDLFrameOffset(enb, resampled(1:30.72e5,nRxAnts)); 
+offset2 = lteDLFrameOffset(enb, resampled(1:nSamples_10frame,nRxAnts)); 
 fprintf('Timing offset to frame start: %d samples\n',offset2);
 % aligning signal with the start of the frame
 resampled = resampled(1+offset2:end,:);   
@@ -429,17 +430,19 @@ hSIB1RecoveryExamplePlots(channelFigure);
 channelFigure.CurrentAxes.XLim = [0 size(hest_array,2)+1];
 channelFigure.CurrentAxes.YLim = [0 size(hest_array,1)+1];
 
-fprintf('%s\n',separator);
-fprintf('plotting second figure\n');
-fprintf('%s\n\n',separator);
-figure(2);
-phase_diff = angle(hest_array(:,:,1,1)) -angle(hest_array(:,:,2,1));
-s = surf(unwrap(phase_diff) );
-s.EdgeColor = 'none';
-xlabel("OFDM Symbol Index");
-ylabel("Subcarrier Index");
-zlabel("Magnitude");
-title("Estimate of Channel Magnitude Frequency Response");
+if nRxAnts>1
+    fprintf('%s\n',separator);
+    fprintf('plotting second figure\n');
+    fprintf('%s\n\n',separator);
+    figure(2);
+    phase_diff = angle(hest_array(:,:,1,1)) -angle(hest_array(:,:,2,1));
+    s = surf(unwrap(phase_diff) );
+    s.EdgeColor = 'none';
+    xlabel("OFDM Symbol Index");
+    ylabel("Subcarrier Index");
+    zlabel("Magnitude");
+    title("Estimate of Channel Magnitude Frequency Response");
+end
 
 fprintf('%s\n',separator);
 fprintf('Calculating mean dB\n');
