@@ -64,7 +64,7 @@ void setup() {
 void loop() {
   digitalWrite(EN_AMP, HIGH);
   delay(5000);  // for a 1-second period (5000ms on, 5000ms off)
-  digitalWrite(EN_AMP, HIGH);
+  digitalWrite(EN_AMP, LOW);
   delay(5000);
 
 }
