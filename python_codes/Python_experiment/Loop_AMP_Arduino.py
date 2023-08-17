@@ -10,7 +10,7 @@ ARDUINO_LINKS = [
 ]
 PC2_IP_ADDRESS = '192.168.0.2'
 PC2_PORT = 12345
-PREAMBLE = b'\xAA\xAA'
+START_LOG = b'\xAA\xAA'
 ACK = b'\xBB\xBB'
 TIMEOUT = 45  # Adjusted to 20 seconds
 
@@ -50,7 +50,7 @@ def main():
             binary_str = format(i, '08b')
             set_pins_from_binary(binary_str)
 
-            client_socket.sendall(PREAMBLE)
+            client_socket.sendall(START_LOG)
             
             # Use custom function to wait for ACK with timeout
             if wait_for_ack(client_socket, TIMEOUT):
