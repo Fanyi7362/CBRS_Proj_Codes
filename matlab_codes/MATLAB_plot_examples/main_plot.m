@@ -1,22 +1,24 @@
 %% load data
 % clear;close all
 
-% csi_folder = './data0921_10total/site1_1805/trace025/csi_log_2020_09_06_19_08_19/';
-csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_01_10_43_16/';
+% csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/data_amplifier_5s_repeat/csi_log_2023_08_17_15_34_56/';
+
+csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_20_14_50_58/';
 
 % filename_a1 = 'csi_amp_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_a2 = 'csi_amp_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_p1 = 'csi_phase_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_p2 = 'csi_phase_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 
-filename_a1 = 'csi_amp_usrpIdx_0_freq_3700000000_N_-1_PRB_25_TX_1_RX_1.csiLog';
-filename_p1 = 'csi_phase_usrpIdx_0_freq_3700000000_N_-1_PRB_25_TX_1_RX_1.csiLog';
+n_prb = 25;
+filename_a1 = sprintf('csi_amp_usrpIdx_0_freq_3630000000_N_-1_PRB_%d_TX_1_RX_1.csiLog', n_prb);
+filename_p1 = sprintf('csi_phase_usrpIdx_0_freq_3630000000_N_-1_PRB_%d_TX_1_RX_1.csiLog', n_prb);
 
 
 csi_a1  = load([csi_folder,filename_a1]);
 csi_p1  = load([csi_folder,filename_p1]);
 
-n_prb = 25;
+
 
 %% data prep
 amp_1 = reshape(csi_a1,1,[],n_prb);
@@ -33,7 +35,7 @@ ed = round(ind*(k+30)/30);
 interval = 1;
 
 figure(5)
-plot_amp(amp_1(1,:,:),st,ed,interval);
+plot_amp((amp_1(1,:,:)),st,ed,interval);
 mean_db = mean(mag2db(amp_1(1,100:end,:)), "all")
 
 % figure(1)
@@ -100,6 +102,7 @@ function plot_amp(amp_all,st,ed,interval)
     amp_all = squeeze(amp_all);
     s = surf(amp_all(st:interval:ed,:)');
 %     s = pcolor(amp_all(st:interval:ed,:)');
+
     s.EdgeColor = 'none';
 end
 

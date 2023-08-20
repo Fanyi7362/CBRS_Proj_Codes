@@ -26,12 +26,12 @@ if rxsim.ReceiveOnSDR
     % '31993A8'
     % '192.168.10.5'
     % '32712EC'
-    rxsim.RadioIdentifier = '192.168.10.6';      % Value used to identify radio, for example, IP address, USB port, or serial number
-    rxsim.RadioSampleRate = 15.36e6;      % Configured for 15.36e6 Hz capture bandwidth
-    rxsim.RadioCenterFrequency = 1940000000; % Center frequency in Hz
-    rxsim.FramesPerCapture = 20;     % Number of contiguous LTE frames to capture
+    rxsim.RadioIdentifier = '192.168.0.11';      % Value used to identify radio, for example, IP address, USB port, or serial number
+    rxsim.RadioSampleRate = 7.68e6;      % Configured for 15.36e6 Hz capture bandwidth
+    rxsim.RadioCenterFrequency = 3630000000; % Center frequency in Hz
+    rxsim.FramesPerCapture = 40;     % Number of contiguous LTE frames to capture
     rxsim.NumCaptures = 1;          % Number of captures for the SDR to perform
-    rxsim.NumAntennas = 1;          % Number of receive antennas
+    rxsim.NumAntennas = 2;          % Number of receive antennas
 
     % Derived parameter
     captureTime = (rxsim.FramesPerCapture + 1)* 10e-3; % Increase capture frame by 1 to account for a full frame not being captured

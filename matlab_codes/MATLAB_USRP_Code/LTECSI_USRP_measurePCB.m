@@ -29,8 +29,8 @@ if ~radioFound
     error(message('sdru:examples:NeedMIMORadio'));
 end
 
-radio.ChannelMapping = 1;     % 1, 2, or [1 2]
-radio.CenterFrequency = 3700000000;
+radio.ChannelMapping = [1 2];     % 1, 2, or [1 2]
+radio.CenterFrequency = 3630000000;
 DuplexMode = 'FDD';
 radio.Gain = 20;
 % Sampling rate is 30.72 MHz. LTE frames are 10 ms long
