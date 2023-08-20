@@ -98,7 +98,7 @@ void loop() {
             phase_ind_set1[i] = phaseIndex;
             phaseShifterWrite(SPI_LE_set1[i], ctrl_word[phaseIndex]);
             if(i==N_PHASE_SET-1) {
-              Serial.write((byte)ACK_SUCCESS1); // Send a success acknowledgement          
+              Serial.write((byte)ACK_SUCCESS1); // Send a success acknowledgement
             }
           }
           else{
@@ -116,12 +116,17 @@ void loop() {
         break;
 
       case PREAMBLE_2:
+        Serial.write((byte)ACK_ERROR2);
+        // flush to clear the receive buffer
+        while(Serial.available() > 0) {
+            Serial.read();
+        }               
         // use phaseIndex for odd number indexed phase shifters
         break;
 
       default:
         // Handle an unknown preamble here
-        Serial.write((byte)ACK_ERROR2); // Send an error acknowledgement
+        Serial.write((byte)ACK_ERROR3); // Send an error acknowledgement
         // flush to clear the receive buffer
         while(Serial.available() > 0) {
             Serial.read();
