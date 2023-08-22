@@ -3,6 +3,7 @@ import serial
 import time
 import random
 import itertools
+import numpy as np
 
 # Parameters
 ARDUINO_LINKS = [
@@ -48,7 +49,7 @@ def generate_all_phases(n_bits):
     bit_to_angle = {1: 180, 2: 90, 3: 45, 4: 22.5}
     granularity = bit_to_angle[n_bits]
     max_angle = 360
-    return [i for i in range(0, max_angle, granularity)]
+    return list(np.arange(0, max_angle, granularity))
 
 def phase_to_byte(phase_value):
     # Convert the phase value to an index
@@ -116,8 +117,9 @@ def main():
     
     arduinos = [serial.Serial(link, BAUD_RATE, timeout=1) for link in ARDUINO_LINKS]
     
-    traverse_list = [0, 1, 2]
-    n_bits = 2
+    # this list starts from 0, so to traverse arduino3, use [2]
+    traverse_list = [2]
+    n_bits = 4
 
     # Create phase_all array, size 8*6
     phase_all = [[0 for _ in range(N_phases_per_device)] for _ in range(len(ARDUINO_LINKS))]
@@ -134,8 +136,10 @@ def main():
                         print(f"Did not receive expected ACK from Arduino. Stopping!")
                         return
 
-            for comb in itertools.product(all_possible_phases, repeat=N_phases_per_device):
-                phase_all[device_to_traverse] = list(comb)
+            for comb in itertools.product(all_possible_phases, repeat=N_phases_per_device-4):
+                padded_comb = list(comb) + [0,0,0,0]
+                phase_all[device_to_traverse] = padded_comb
+                # phase_all[device_to_traverse] = list(comb)
 
                 arduino_device = arduinos[device_to_traverse]
                 arduino_device.flushInput()
@@ -160,8 +164,8 @@ def main():
     finally:
         client_socket.sendall(Socket_END)
         print("Sent Socket_END to PC2.")
-
         client_socket.close()
+
         for arduino_device in arduinos:
             arduino_device.close()
 

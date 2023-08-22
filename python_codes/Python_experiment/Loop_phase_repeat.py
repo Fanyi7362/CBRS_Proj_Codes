@@ -99,40 +99,66 @@ def wait_for_ack(socket, ack, timeout):
 
 def main():
     print(f"Main Starts!")
+    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    print(f"PC1 start connecting to PC2!")
+    client_socket.connect((PC2_IP_ADDRESS, PC2_PORT))
+    client_socket.settimeout(Socket_TIMEOUT)  # timeout for socket to allow non-blocking behavior
+    print(f"Connection success!")
     
     arduinos = [serial.Serial(link, BAUD_RATE, timeout=1) for link in ARDUINO_LINKS]
     
+    traverse_list = [2]
+
     # Create phase_all array
     # an 8x6 matrix where every element is initialized to zero
     phase_all = [[0 for _ in range(6)] for _ in range(len(ARDUINO_LINKS))]
     try:
-        for ii in range(256):  # Repeat 128 times
-            if ii%2==0:
-                phase_min = 0
-                phase_max = 0
-            elif ii%2==1:
-                phase_min = 180
-                phase_max = 180
-
-            # Generate phases for all Arduinos
+        for device_to_traverse in traverse_list:
+            # Only send zero phases to non-traversing devices once
             for i, arduino_device in enumerate(arduinos):
+                if i != device_to_traverse:
+                    arduino_device.flushInput()
+                    arduino_device.flushOutput()
+                    if not send_phase_values_to_device(arduino_device, phase_all[i]):
+                        print(f"Did not receive expected ACK from Arduino. Stopping!")
+                        return
+                            
+            for ii in range(64):  # Repeat 128 times
+                if ii%2==0:
+                    phase_min = 0
+                    phase_max = 0
+                elif ii%2==1:
+                    phase_min = 0
+                    phase_max = 0
+
+                # Generate phases for all Arduinos
                 for j in range(6):
-                    phase_all[i][j] = random_phase(phase_min, phase_max, 2)
+                    phase_all[device_to_traverse][j] = random_phase(phase_min, phase_max, 2)
 
-            # Send phases to all Arduinos
-            for i, arduino_device in enumerate(arduinos):
+                # Send phases to all Arduinos
+                arduino_device = arduinos[device_to_traverse]
                 arduino_device.flushInput()
                 arduino_device.flushOutput()
                 if not send_phase_values_to_device(arduino_device, phase_all[i]):
                     print(f"Did not receive expected ACK from Arduino. Stopping!")
                     return            
-                
-            time.sleep(0.040)
+                    
+                # Send Socket_LOG to PC2 and wait for ACK
+                client_socket.sendall(Socket_LOG)
+                if wait_for_ack(client_socket, Socket_ACK, Socket_TIMEOUT):
+                    print(f"Received ACK from PC2!")
+                else:
+                    print(f"Did not receive expected ACK from PC2. Stopping!")
+                    break  
                 
     except KeyboardInterrupt:
         print("Interrupted!")
 
     finally:
+        client_socket.sendall(Socket_END)
+        print("Sent Socket_END to PC2.")     
+        client_socket.close()
+
         for arduino_device in arduinos:
             arduino_device.close()
 

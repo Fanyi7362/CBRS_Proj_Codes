@@ -45,8 +45,6 @@ unsigned long lastMillis = 0;
 const uint16_t PREAMBLE_1 = 0xAAAA;
 const uint16_t PREAMBLE_2 = 0xBBBB;
 
-int count = 0;
-
 void setup() {
   // initialize SPI:
   SPI.begin();
@@ -61,7 +59,7 @@ void setup() {
        
   pinMode(EN_AMP, OUTPUT); 
   pinMode(TRIGGER_PIN, OUTPUT);
-  digitalWrite(EN_AMP, HIGH);
+  digitalWrite(EN_AMP, LOW);
   digitalWrite(TRIGGER_PIN, LOW);
 
   // Initialize control words
@@ -101,12 +99,6 @@ void loop() {
             phaseShifterWrite(SPI_LE_set1[i], ctrl_word[phaseIndex]);
             if(i==N_PHASE_SET-1) {
               Serial.write((byte)ACK_SUCCESS1); // Send a success acknowledgement
-              // if(count%2==0){
-              //   digitalWrite(EN_AMP, HIGH);
-              // } else {
-              //   digitalWrite(EN_AMP, LOW);
-              // }
-              // count++;
             }
           }
           else{
