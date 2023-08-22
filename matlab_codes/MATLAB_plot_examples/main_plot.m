@@ -1,9 +1,9 @@
 %% load data
 % clear;close all
 
-% csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/data_amplifier_5s_repeat/csi_log_2023_08_17_15_34_56/';
+csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/loop_phase_traverse1board_envConstant_exp1/csi_log_2023_08_21_18_40_13/';
 
-csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_20_14_50_58/';
+%csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_21_19_48_41/';
 
 % filename_a1 = 'csi_amp_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_a2 = 'csi_amp_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
