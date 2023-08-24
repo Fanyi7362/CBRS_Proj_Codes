@@ -89,7 +89,7 @@ def send_phase_values_to_device(arduino_device, phases):
     arduino_device.write(Serial_PREAMBLE)
     
     for phase_value in phases:
-        print(phase_value)
+        # print(phase_value)
         byte_to_send = phase_to_byte(phase_value)
         arduino_device.write(bytearray([byte_to_send]))
 
@@ -149,6 +149,7 @@ def wait_for_rate(socket, timeout):
             data = socket.recv(buffer_size).decode("utf-8").strip()
             try:
                 received_float = float(data)
+                print(f"Received mean power: {received_float}")
                 return received_float
             except ValueError:
                 continue  # Received data isn't a valid float
@@ -196,13 +197,14 @@ def beamforming_algorithm():
     n_step_adjust = 0
     n_explore = 0
     n_explore_hist = np.zeros(N_STEP_ADJUST_THRESH + 1)
+    n_bits = 4
 
     feedback = 0
     try:
         while True:
             # Step 2: Random Guess
             for i in range(N_ELEMENTS):
-                phase_change[i] = random_phase(-bf_state.step_size, bf_state.step_size)
+                phase_change[i] = random_phase(-bf_state.step_size, bf_state.step_size, n_bits)
                 bf_state.phase_array[i] += phase_change[i]
                 bf_state.phase_array[i] %= 360.0
 

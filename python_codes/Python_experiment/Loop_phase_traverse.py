@@ -119,7 +119,8 @@ def main():
     
     # this list starts from 0, so to traverse arduino3, use [2]
     traverse_list = [2]
-    n_bits = 4
+    n_bits = 1
+    n_traverseEle = 6 # should be smaller than 6
 
     # Create phase_all array, size 8*6
     phase_all = [[0 for _ in range(N_phases_per_device)] for _ in range(len(ARDUINO_LINKS))]
@@ -136,10 +137,10 @@ def main():
                         print(f"Did not receive expected ACK from Arduino. Stopping!")
                         return
 
-            for comb in itertools.product(all_possible_phases, repeat=N_phases_per_device-4):
-                padded_comb = list(comb) + [0,0,0,0]
+            for comb in itertools.product(all_possible_phases, repeat=n_traverseEle):
+                padding_count = N_phases_per_device - n_traverseEle
+                padded_comb = list(comb) + [0] * padding_count                
                 phase_all[device_to_traverse] = padded_comb
-                # phase_all[device_to_traverse] = list(comb)
 
                 arduino_device = arduinos[device_to_traverse]
                 arduino_device.flushInput()
