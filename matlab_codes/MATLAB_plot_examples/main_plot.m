@@ -1,9 +1,9 @@
 %% load data
 % clear;close all
 
-csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/loop_phase_traverse1board_envConstant_exp1/csi_log_2023_08_21_18_40_13/';
+%csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/test/csi_log_2023_08_23_19_38_10/';
 
-%csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_21_19_48_41/';
+csi_folder = '~/fanyi/LTEScope_CSI/build/lib/csi_main/csi_log_2023_08_23_20_28_17/';
 
 % filename_a1 = 'csi_amp_usrpIdx_0_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
 % filename_a2 = 'csi_amp_usrpIdx_1_freq_2355000000_N_-1_PRB_50_TX_4_RX_2.csiLog';
@@ -36,7 +36,9 @@ interval = 1;
 
 figure(5)
 plot_amp((amp_1(1,:,:)),st,ed,interval);
-mean_db = mean(mag2db(amp_1(1,100:end,:)), "all")
+% mean_power = mean(amp_1.*amp_1,"all")
+mean_db1 = mean(10*log10(amp_1.*amp_1), "all");
+mean_db2 = mean(mag2db(amp_1(1,1:end,:)), "all");
 
 % figure(1)
 % subplot(2,2,1)

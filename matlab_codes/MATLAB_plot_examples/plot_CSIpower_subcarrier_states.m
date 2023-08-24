@@ -3,7 +3,7 @@ n_prb = 25;
 
 % Base directory
 % baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/';
-baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/loop_phase_traverse2Ele_16states_exp3/';
+baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/test/';
 
 % Get all folders in the base directory
 allFolders = dir([baseDir 'csi_log_2023*']);
