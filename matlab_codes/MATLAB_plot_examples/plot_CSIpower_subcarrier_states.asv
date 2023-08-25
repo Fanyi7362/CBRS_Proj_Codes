@@ -3,7 +3,7 @@ n_prb = 25;
 
 % Base directory
 % baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/';
-baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/loop_phase_traverse1board_phaConstant_exp2/';
+baseDir = '~/fanyi/LTEScope_CSI/build/lib/csi_main/old_data/directional_antenna_exp/loop_phase_traverse2Ele_16states_exp1/';
 
 % Get all folders in the base directory
 allFolders = dir([baseDir 'csi_log_2023*']);
@@ -39,12 +39,20 @@ db = 10*log10(amp_all.*amp_all);
 s = surf(db(:,:)');
 ylabel('Subcarrier Index');
 xlabel('phase configurations');
-zlabel('amplitude');
+zlabel('Signal Power');
 title('Amplitude of CSI traverse all phase cases');
 % legend(arrayfun(@(x) ['Log ' num2str(x)], 1:numFolders, 'UniformOutput', false));
 
 figure(2);
-db_max = max(db,1);
-
+db_max = max(db(10:end,:),[],1);
+db_min = min(db(10:end,:),[],1);
+hold on;
+plot(db_max(1,:));
+plot(db_min(1,:));
+hold off;
+xlabel('Subcarrier Index');
+ylabel('Signal Power');
+legend(["MAX", "MIN"]);
+title('MAX and MIN Signal Power per subcarrier');
 
 
