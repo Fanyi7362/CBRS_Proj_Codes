@@ -2,8 +2,6 @@ import socket
 import serial
 import time
 import random
-import itertools
-import numpy as np
 
 # Parameters
 ARDUINO_LINKS = [
@@ -26,8 +24,8 @@ Serial_ACK_ERROR2 = b'\xBB'
 Serial_ACK_ERROR3 = b'\xCC'
 BAUD_RATE = 460800
 Socket_TIMEOUT = 45
+Socket_TIMEOUT_SHORT = 10
 Serial_TIMEOUT = 10
-N_phases_per_device = 6
 
 def random_phase(min, max, n_bits):
     # Validate n_bits input
@@ -44,12 +42,6 @@ def random_phase(min, max, n_bits):
     irandom = random.randint(imin, imax)
     return irandom * granularity
 
-def generate_all_phases(n_bits):
-    """Generates all possible phase values for a given n_bits."""
-    bit_to_angle = {1: 180, 2: 90, 3: 45, 4: 22.5}
-    granularity = bit_to_angle[n_bits]
-    max_angle = 360
-    return list(np.arange(0, max_angle, granularity))
 
 def phase_to_byte(phase_value):
     # Convert the phase value to an index
@@ -67,7 +59,7 @@ def send_phase_values_to_device(arduino_device, phases):
     arduino_device.write(Serial_PREAMBLE)
     
     for phase_value in phases:
-        print(phase_value)
+        # print(phase_value)
         byte_to_send = phase_to_byte(phase_value)
         arduino_device.write(bytearray([byte_to_send]))
 
@@ -92,7 +84,6 @@ def send_phase_values_to_device(arduino_device, phases):
             print("Timeout while waiting for acknowledgement")
             return False  # Timed out before receiving expected ACK
         
-    time.sleep(0.1)
 
     return True
 
@@ -107,25 +98,39 @@ def wait_for_ack(socket, ack, timeout):
             continue
     return False
 
+def wait_for_rate(socket, timeout):
+    start_time = time.time()
+    buffer_size = 1024  # Adjust this value if needed
+    received_float = -100.0
+    while time.time() - start_time < timeout:
+        try:
+            data = socket.recv(buffer_size).decode("utf-8").strip()
+            try:
+                received_float = float(data)
+                print(f"Received mean power: {received_float}")
+                return received_float
+            except ValueError:
+                continue  # Received data isn't a valid float
+        except socket.timeout:
+            continue
+    return received_float  
+
+
 def main():
     print(f"Main Starts!")
     client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     print(f"PC1 start connecting to PC2!")
     client_socket.connect((PC2_IP_ADDRESS, PC2_PORT))
-    client_socket.settimeout(Socket_TIMEOUT)
+    client_socket.settimeout(Socket_TIMEOUT)  # timeout for socket to allow non-blocking behavior
     print(f"Connection success!")
     
     arduinos = [serial.Serial(link, BAUD_RATE, timeout=1) for link in ARDUINO_LINKS]
     
-    # this list starts from 0, so to traverse arduino3, use [2]
-    traverse_list = [0]
-    n_bits = 4
-    n_traverseEle = 2 # should be smaller than 6
+    traverse_list = [0,1,2,3,4,5,6,7]
 
-    # Create phase_all array, size 8*6
-    phase_all = [[0 for _ in range(N_phases_per_device)] for _ in range(len(ARDUINO_LINKS))]
-    all_possible_phases = generate_all_phases(n_bits)
-
+    # Create phase_all array
+    # an 8x6 matrix where every element is initialized to zero
+    phase_all = [[0 for _ in range(6)] for _ in range(len(ARDUINO_LINKS))]
     try:
         for device_to_traverse in traverse_list:
             # Only send zero phases to non-traversing devices once
@@ -136,35 +141,43 @@ def main():
                     if not send_phase_values_to_device(arduino_device, phase_all[i]):
                         print(f"Did not receive expected ACK from Arduino. Stopping!")
                         return
+                            
+            for ii in range(128):  # Repeat 128 times
+                if ii%2==0:
+                    phase_min = 0
+                    phase_max = 0
+                elif ii%2==1:
+                    phase_min = 0
+                    phase_max = 0
 
-            for comb in itertools.product(all_possible_phases, repeat=n_traverseEle):
-                padding_count = N_phases_per_device - n_traverseEle
-                padded_comb = list(comb) + [0] * padding_count                
-                phase_all[device_to_traverse] = padded_comb
+                # Generate phases for all Arduinos
+                for j in range(6):
+                    phase_all[device_to_traverse][j] = random_phase(phase_min, phase_max, 2)
 
+                # Send phases to all Arduinos
                 arduino_device = arduinos[device_to_traverse]
                 arduino_device.flushInput()
                 arduino_device.flushOutput()
-                if not send_phase_values_to_device(arduino_device, phase_all[device_to_traverse]):
+                if not send_phase_values_to_device(arduino_device, phase_all[i]):
                     print(f"Did not receive expected ACK from Arduino. Stopping!")
-                    return
-
+                    return            
+                    
                 # Send Socket_LOG to PC2 and wait for ACK
-                client_socket.sendall(Socket_LOG)
-                if wait_for_ack(client_socket, Socket_ACK, Socket_TIMEOUT):
+                client_socket.sendall(Socket_LOG)                
+                if wait_for_ack(client_socket, Socket_ACK, Socket_TIMEOUT_SHORT):
                     print(f"Received ACK from PC2!")
+                    wait_for_rate(client_socket, Socket_TIMEOUT_SHORT)
                 else:
                     print(f"Did not receive expected ACK from PC2. Stopping!")
-                    break    
+                    break                
 
-            phase_all[device_to_traverse] = [0] * N_phases_per_device
 
     except KeyboardInterrupt:
         print("Interrupted!")
 
     finally:
         client_socket.sendall(Socket_END)
-        print("Sent Socket_END to PC2.")
+        print("Sent Socket_END to PC2.")     
         client_socket.close()
 
         for arduino_device in arduinos:
