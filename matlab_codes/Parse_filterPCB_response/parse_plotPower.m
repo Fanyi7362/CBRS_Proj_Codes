@@ -1,6 +1,6 @@
 folder = './data/';
-voltages = 2.50:0.25:6.00; % all voltage values
-voltages_toPlot = [3.25:0.25:5]; % voltage values to plot
+voltages = 4.0; % all voltage values
+voltages_toPlot = [4.0]; % voltage values to plot
 freqs = 3550:5:3700; % frequencies
 
 figure; % create a new figure
@@ -41,7 +41,7 @@ end
 avg_power = mean(power, 2);
 
 % adjust power values based on the standard at 3700MHz
-power = power - avg_power + mean(power(freqs == 3700, :));
+% power = power - avg_power + mean(power(freqs == 3700, :));
 
 % iterate over voltages to plot
 for v = find(ismember(voltages, voltages_toPlot))
