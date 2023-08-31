@@ -1,6 +1,6 @@
 #!/bin/bash
 
-sleep 5
+sleep 10
 # Loop through frequencies
 for freq in $(seq 3550e6 5e6 3700e6); do
   # Start the RX measurement on PC2 using SSH
