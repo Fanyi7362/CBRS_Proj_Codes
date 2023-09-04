@@ -2,6 +2,7 @@ folder = './data/';
 voltages = 2.00:0.25:6.00; % all voltage values from 2.00V to 6.00V
 voltages_toPlot = [2.00:0.25:6.00]; % voltage values to plot
 freqs = 3550:5:3700; % frequencies
+metric = 'RSRP';
 
 figure; % create a new figure
 hold on; % keep all plots on the same axes
@@ -25,18 +26,34 @@ for f = 1:numel(freqs)
             error('Expected one file for frequency %d and voltage %.2fV, found %d.', freqs(f), voltages(v), numel(files));
         end
 
-        % read the last line of the current file
+        values = []; % initialize an empty array to store metric values
+        % read file and extract metric values
         fid = fopen(fullfile(folder, foldername, files(1).name), 'rt');
-        lastline = '';
         tline = fgets(fid);
         while ischar(tline)
-            lastline = tline;
+            % the metric name, followed by any number of spaces (\\s*), 
+            % an optional positive/negative sign ([+-]?), any number of digits (\\d*), 
+            % a decimal point, and again any number of digits            
+            pattern = sprintf('%s:\\s*([+-]?\\d*\\.\\d*) dBm', metric);
+            tokens = regexp(tline, pattern, 'tokens');
+            if ~isempty(tokens)
+                metricValue = str2double(tokens{1}{1});
+                if metricValue ~= -inf
+                    values = [values; metricValue];
+                end
+            end
             tline = fgets(fid);
         end
         fclose(fid);
 
-        % extract power_peak value from the last line
-        power(f, v) = sscanf(lastline, 'power_peak: %f');
+        if isempty(values)
+            power(f, v) = 0;
+            fprintf('No valid metric values found for frequency %d and voltage %.2fV.\n', freqs(f), voltages(v));
+        else
+            % compute the mean of metric values for the file
+            power(f, v) = mean(values);
+        end
+
     end
 end
 
@@ -55,6 +72,6 @@ end
 % add a legend and labels
 legend(arrayfun(@(v) sprintf('%.2fV', v), voltages_toPlot, 'UniformOutput', false));
 xlabel('Frequency (MHz)');
-ylabel('Adjusted Power Peak (dBm)');
+ylabel(sprintf('Adjusted %s (dBm)', metric));
 grid on;
 hold off;
