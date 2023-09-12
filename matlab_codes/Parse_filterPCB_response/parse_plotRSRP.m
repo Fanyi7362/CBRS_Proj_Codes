@@ -1,6 +1,8 @@
 folder = './data/';
-voltages = 2.00:0.25:6.00; % all voltage values from 2.00V to 6.00V
-voltages_toPlot = [2.00:0.25:6.00]; % voltage values to plot
+% voltages = 2.00:0.25:6.00; % all voltage values from 2.00V to 6.00V
+% voltages_toPlot = [2.00:0.25:6.00]; % voltage values to plot
+voltages = [0, 2, 2.5, 3, 3.5, 4, 4.5, 4.75, 5, 5.5, 6]; % all voltage values from 2.00V to 6.00V
+voltages_toPlot = [0, 2, 2.5, 3, 3.5, 4, 4.5, 4.75, 5, 5.5, 6]; % voltage values to plot
 freqs = 3550:5:3700; % frequencies
 metric = 'RSRP';
 
@@ -61,7 +63,7 @@ end
 avg_power = mean(power, 2);
 
 % adjust power values based on the standard at 3700MHz
-power = power - avg_power + mean(power(freqs == 3700, :));
+% power = power - avg_power + mean(power(freqs == 3700, :));
 
 % iterate over voltages to plot
 for v = find(ismember(voltages, voltages_toPlot))
