@@ -1,0 +1,14 @@
+function [data] = swap_fc(freq, data, fc)
+    idx_ctr = findNearest(freq, fc);
+
+    temp1 = data(idx_ctr:1:idx_ctr+121);
+    temp2 = data(idx_ctr:-1:idx_ctr-121);
+    [~, idx] = min(temp2-temp1,[],2);
+
+    idx_st = idx_ctr-idx;
+    idx_ed = idx_ctr+idx;
+
+    temp = data(idx_ed:-1:idx_st);
+    data(idx_st:1:idx_ed) = temp;
+
+end
